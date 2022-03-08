@@ -1,50 +1,31 @@
 '''
 TO DO 
 
-1. Load all Bible books for inserted into DB but dont make nested FOR statements
-
-Function to get Book,
-Then calls function to get Chapters
-Then insers
-
+0. Make github repo for this project.
+1. Separate main code so loops are not nested but simplier to read
+2. need to append to the nwt dictionary each time.
+3. Check thisç Bug where last verse is being included with 2nd to last verse.
     
 '''
-
-import sqlite3
 
 import time
 import os
 import re
+
 # from search_bible import get_search_term_verses
-from get_bible import get_all_verses
-from file_functions import get_chapter_list
+from get_chapter import get_chapter_as_dict
+from utils import get_list_of_chapters
+from utils import get_list_of_bible_books
 
 
 t0 = time.time()
 
-conn = sqlite3.connect(':memory:')
-c=conn.cursor()
-c.execute("""CREATE TABLE verses (
-        book_name text,
-        chapter_num integer,
-        verse_num integer,
-        verse_text text
-        )""")
+BOOKS_FOLDER='C:/Coding/BibleTools3'
 
-conn.commit()
-
-os.chdir('C:/Users/dwate/OneDrive/Coding/BibleTools3')
-
-base_path = os.path.join(os.getcwd(),'Hebrew Scriptures') # add HB Scriptures
-''' base_path now C:/Users/dwate/OneDrive/Coding/BibleTools2/Hebrew Scriptures
-'''
-
-bible_books = os.listdir(base_path) # where bible book folders live
-'''This will be a list with the Bible book folder names it in 
-eg. ['01-Genesis','02-Exodus']'''
+base_path, bible_books_list = get_list_of_bible_books(BOOKS_FOLDER)
 
 
-for book in bible_books:
+for book in bible_books_list:
     ''' Interate over the bible book folder names list  ''' 
 
     file_path = os.path.join(base_path, book)
@@ -52,34 +33,33 @@ for book in bible_books:
         C:/Users/dwate/OneDrive/Coding/BibleTools2/Hebrew Scriptures/Exodus 02
         on first iteration '''
 
-    book_chapters = get_chapter_list(file_path)
+    book_chapters_list = get_list_of_chapters(file_path)
     ''' book_chapters is a list of all the Word docx chapters in that
         bible book directory. So eg Genesis will have 50 entries ''' 
     
-   
-    for chapter in book_chapters:
+    for chapter in book_chapters_list:
         ''' interate over each chapter ''' 
-        
-        name_chapter = re.findall(r'\w+', chapter)
+
+        chapter_filename = re.findall(r'\w+', chapter)
         ''' Breaks current chapter file name into list like this: ['Exodus', '01', 'docx']
-            Will then use this list below to identify book name and current chapter number '''
-           
+            Will then us    e this list below to identify book name and current chapter number '''
+
         chapter_path = os.path.join(file_path, chapter) # add on chapter file to the path
 
         # filepath = r'C:\Users\dwate\OneDrive\Coding\BibleTools-Flask\Hebrew Scriptures\02-Exodus\Exodus 06.docx'
+        
+        b = chapter_filename[0]
+        c = int(chapter_filename[1])
+        
+        print (f"Getting book: {b} and chapter: {c} and making dictionary")
 
-        nwt = get_all_verses(chapter_path, name_chapter[0])
+        nwt = get_chapter_as_dict(chapter_path, b, c)
+        print (nwt)
 
-        for v in nwt:
-            c.execute("INSERT INTO verses VALUES (?,?,?,?)", (v["book_name"], v["chapter_num"], v["verse_num"], v["verse_text"]))
-            conn.commit()
+        # for v in nwt:
+        #     print (v["book_name"], v["chapter_num"], v["verse_num"], v["verse_text"])
 
-# c.execute("SELECT * FROM verses WHERE verse_text LIKE '%40%'")
 
-c.execute("SELECT * FROM verses WHERE chapter_num = 2")
-print(c.fetchall())
-
-conn.close()
 t1 = time.time()
 
 print (t1-t0)
