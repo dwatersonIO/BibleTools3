@@ -11,194 +11,177 @@
     Appends each para to a list since this is how to interate over file using the docx package.
     But we want a string so ... returns string converted from list and replaces /n with a space
 
+    TO DO
+
+    1. When making the dict with all data need to add book name key somehow
+
 """
-import os
+import json
 import re
 import docx
+import time
 
 
-def get_list_of_chapters(path):
-    """Takes in the  path where the chapter files live eg: 'Hebrew Scriptures/02-Exodus'
-    and returns a list called chapter_list that contains the files to process.
-    This function makes sure that other files that are in bible book directory are not processed.
-    For example Exodus 36.Advisor.docx and and temp files. S=Funtion is commented out that allows making a backup of files
-    Later on if want to backup files first then commpare can include these lines if not os.path.exists('backup'):
-    os.mkdir ('backup')
-    Many of these commands explained in Corey Schafter YouTube video "Automate Parsing and renaming of multiple files"
+
+BASE_PATH='/home/david/Coding/BibleTools3/Hebrew Scriptures'
+
+BIBLE_BOOKS2 = {
+    "Genesis": {"book_num": 1, "num_of_chaps": 50 },
+    "Exodus" : {"book_num": 2, "num_of_chaps": 40},
+    "Leviticus" : {"book_num": 3, "num_of_chaps": 27},
+    "Numbers": {"book_num": 4, "num_of_chaps": 36},
+    "Deuteronomy": {"book_num": 5, "num_of_chaps": 34},
+    "Joshua": {"book_num": 6, "num_of_chaps": 24},
+    "Judges": {"book_num": 7, "num_of_chaps": 21},
+    "Ruth": {"book_num": 8, "num_of_chaps": 4},
+    "1 Samuel": {"book_num": 9, "num_of_chaps": 31},
+    "2 Samuel": {"book_num": 10, "num_of_chaps": 24},
+    "1 Kings": {"book_num": 11, "num_of_chaps": 22},
+    "2 Kings": {"book_num": 12, "num_of_chaps": 25},
+    "1 Chronicles": {"book_num": 13, "num_of_chaps": 29},
+    "2 Chronicles": {"book_num": 14, "num_of_chaps": 36},
+    "Ezra": {"book_num": 15, "num_of_chaps": 10},
+    "Nehemiah": {"book_num": 16, "num_of_chaps": 13},
+    "Esther": {"book_num": 17, "num_of_chaps": 10},
+    "Job": {"book_num": 18, "num_of_chaps": 42},
+    "Psalms": {"book_num": 19, "num_of_chaps": 150},
+    "Proverbs": {"book_num": 20, "num_of_chaps": 31},
+    "Ecclesiastes": {"book_num": 21,"num_of_chaps": 12},
+    "Song of Solomon": {"book_num": 22, "num_of_chaps": 8},
+    "Isaiah": {"book_num": 23, "num_of_chaps": 66}, 
+    "Jeremiah": {"book_num": 24, "num_of_chaps": 52},
+    "Lamentations": {"book_num": 25, "num_of_chaps": 5},
+    "Ezekiel": {"book_num": 26, "num_of_chaps": 48},
+    "Daniel": {"book_num": 27, "num_of_chaps": 12},
+    "Hosea": {"book_num": 28, "num_of_chaps": 14},
+    "Joel": {"book_num": 29, "num_of_chaps": 3},
+    "Amos": {"book_num": 30, "num_of_chaps": 9},
+    "Obadiah": {"book_num": 31, "num_of_chaps": 1},
+    "Jonah": {"book_num": 32, "num_of_chaps": 4},
+    "Micah": {"book_num": 33, "num_of_chaps": 7}, 
+    "Nahum": {"book_num": 34, "num_of_chaps": 3},
+    "Habakkuk": {"book_num": 35, "num_of_chaps": 3},
+    "Zephaniah": {"book_num": 36, "num_of_chaps": 3},
+    "Haggai": {"book_num": 37, "num_of_chaps": 2},
+    "Zechariah": {"book_num": 38, "num_of_chaps": 14},
+    "Malachi": {"book_num": 39, "num_of_chaps": 4}
+}
+
+# for book in BIBLE_BOOKS2:
+#     print (book, BIBLE_BOOKS2[book]["book_dir_name"])
+
+# bk = "Genesis"
+
+# print (BIBLE_BOOKS2[bk]["book_dir_name"])
+
+# print ("Exodus" in BIBLE_BOOKS2)
+
+
+def get_list_of_chapters(book_to_process: str) -> list:
     """
-    chapter_list = []
-    # path should be like this: 'Hebrew Scriptures/02-Exodus'
-    os.chdir(path)
-
-    for f in os.listdir():
-        f_name, f_ext = os.path.splitext(f)  # separate file name from extension
-
-        f_parts = f_name.split(
-            "."
-        )  # divide filename to list on period. eg will produce ['Exodus 01', 'Revised Text', 'Advisor']
-
-        # print (f_parts[0][0])
-        if (
-            len(f_parts) < 2
-            and f_parts[0][0] != "~"
-            and f_parts[0] != "backup"
-            and f_ext == ".docx"
-        ):
-            # only want 1. list item with 1 item 2. No files starting with "~" and 3. Not the backup folder
-
-            new_name = "{}{}".format(
-                f_parts[0], f_ext
-            )  # piece the file name together again
-            chapter_list.append(
-                new_name
-            )  # append it to the list we want to eventually return
-
-    return chapter_list
-
-
-def get_list_of_chapters(path):
-    """Takes in the  path where the chapter files live eg: 'Hebrew Scriptures/02-Exodus'
-    and returns a list called chapter_list that contains the files to process.
-    This function makes sure that other files that are in bible book directory are not processed.
-    For example Exodus 36.Advisor.docx and and temp files. S=Funtion is commented out that allows making a backup of files
-    Later on if want to backup files first then commpare can include these lines if not os.path.exists('backup'):
-    os.mkdir ('backup')
-    Many of these commands explained in Corey Schafter YouTube video "Automate Parsing and renaming of multiple files"
+    accapts Bible book name:
+    returns a list of chapters incl full path for that book
+    
     """
-    chapter_list = []
-    # path should be like this: 'Hebrew Scriptures/02-Exodus'
-    os.chdir(path)
+    
+    chaps_to_process = []
 
-    for f in os.listdir():
-        f_name, f_ext = os.path.splitext(f)  # separate file name from extension
+    for chapter in range(1, BIBLE_BOOKS2[book_to_process]['num_of_chaps'] + 1):  # Start: from 1, Stop: add 1 since Range not includng last number
 
-        f_parts = f_name.split(
-            "."
-        )  # divide filename to list on period. eg will produce ['Exodus 01', 'Revised Text', 'Advisor']
+        chap_num_str = str(chapter).zfill(2)  # eg 02. Int converted to str  padded out to 2 digits
+        book_num_str = str(BIBLE_BOOKS2[book_to_process]['book_num']).zfill(2)
 
-        # print (f_parts[0][0])
-        if (
-            len(f_parts) < 2
-            and f_parts[0][0] != "~"
-            and f_parts[0] != "backup"
-            and f_ext == ".docx"
-        ):
-            # only want 1. list item with 1 item 2. No files starting with "~" and 3. Not the backup folder
+        book_dir_name = f"{book_num_str}-{book_to_process}"
 
-            new_name = "{}{}".format(
-                f_parts[0], f_ext
-            )  # piece the file name together again
-            chapter_list.append(
-                new_name
-            )  # append it to the list we want to eventually return
+        if book_to_process == "Psalms":
+            chap_num_str = str(chapter).zfill(3)  # eg 002. Psalms has more than 99 "chapters" so pad out to 3 digits
 
-    return chapter_list
+        chapter_path = f"{BASE_PATH}/{book_dir_name}/{book_to_process} {chap_num_str}.docx"
+        chaps_to_process.append(chapter_path) 
+    
+    return chaps_to_process    
 
-
-def count_verses(chapter_text):
-    """Returns number of verses by searching colon"""
-
-    num_of_verses_with_colon = re.findall(r":\d+", chapter_text)[-1]
-
-    return int(
-        num_of_verses_with_colon[1:]
-    )  # delete colon and returned as str so need int
-
-
-def extract_chapter(chapter_path: str):
+        
+def convert_word_doc(chapter_path: str) -> str: 
     """
-    Explain function
+    takes a Word docx of a Bible book chapter incl path
+    returns chapter as a string
     """
     doc = docx.Document(chapter_path)
     chapter_paragraphs = []
 
     for _, para in enumerate(doc.paragraphs, 1):
-
         chapter_paragraphs.append(para.text)  # append to list
-
         raw_chapter_text = " ".join(chapter_paragraphs)  # Convert back to a string
-
         chapter_text = raw_chapter_text
-
     return chapter_text
 
 
-def get_chapter_dict(file):
+def make_list_of_dicts_for_book(book_contents: str, book_name: str) -> list:
     """
-    Explain function
+    Takes a book as str and return a dictionary. 
+    Use the regex group keyword to split the chapter, verse and verse text
     """
 
     pattern = re.compile(r"(\d+:\d+)(.+?)(?=\d+:\d+|$)")
-    matches = pattern.finditer(file)
-    result = [
+    matches = pattern.finditer(book_contents)
+    chapter_dict = [
         {
-            "chapter": int(m.group(1).split(":")[0]),
-            "verse": int(m.group(1).split(":")[1]),
-            "text": m.group(2),
-            "words_in_verse": len(m.group(2)),
+            "book_name": book_name,
+            "chapter_num": int(m.group(1).split(":")[0]),
+            "verse_num": int(m.group(1).split(":")[1]),
+            "verse_text": m.group(2).strip(),
+            "num_words_in_verse": len(m.group(2).split()),  
         }
         for m in matches
     ]
-    # Use code below if want to search occurances of particular string
-    # count = 0
-    # for m in matches:
-    #     if "Ġeħova" in m.group(2):
-    #         print (m.group(1), m.group(2))
-    #         count += 1
-    # print (count)
 
-    for match in matches:
-        print(match.group(1), match.group(2))
-        # print(match)
-    return result
+    return chapter_dict
+
+    # for match in matches:
+    #     print(match.group(1), match.group(2))
 
 
-"""
-"""
+def get_book_content(chapters_in_book):
+    book_contents =''
+    for chapter in chapters_in_book: # iterate over list of chapters
+        book_contents += convert_word_doc(chapter)
+    return book_contents
 
-# books_in_bible = [("02", "Exodus", 40), ("01", "Genesis", 50)]
-books_in_bible = [("02", "Exodus", 40)]
-base_path="/home/david/Coding/BibleTools3/Hebrew Scriptures"
-chap_paths_list = []
-for book in books_in_bible:
-    book_fname = f"{book[0]}-{book[1]}"  # eg 02-Exodus
-    chaps_in_book = book[2]  # int eg 40
+def make_bible_list_of_dicts(list_of_books: list) -> list:
+    progressive_list_of_dicts =[]
+    temp_list=[]
 
-    for chapter in range(1, chaps_in_book + 1):  # Start: from 1, Stop: add one since starts from zero
-        chap_num_str = str(chapter).zfill(2)  # eg 02 but a string padded out 2 digits
-        book_path = f"{base_path}/{book_fname}/{book[1]} {chap_num_str}.docx"
-        chap_paths_list.append(book_path)
-        
+    for book in list_of_books:
+        chapters_in_book=get_list_of_chapters(book)
+      
+        book_content =  get_book_content(chapters_in_book)
+   
+        temp_list = make_list_of_dicts_for_book(book_content, book)
+        progressive_list_of_dicts += temp_list
+
+    return progressive_list_of_dicts
+
+
+def save_bible_as_json(result):
+    with open("/home/david/Coding/BibleTools3/result.txt", "w", encoding="utf8") as f:
+        json.dump(result, f, ensure_ascii=False)
+
+def doit():
+    start_time = time.time()
+    keys = list(BIBLE_BOOKS2.keys())
     
-all_chapters=chap_paths_list 
+    result=make_bible_list_of_dicts(keys)
+    save_bible_as_json(result)
 
-# all_chapters = get_list_of_chapters(book_path)
+    end_time = time.time()
 
-book_text = ""
-for chapter_path in all_chapters:
-    book_text += extract_chapter(chapter_path)
-
-
-print (get_chapter_dict(book_text))
-
-# for a in get_chapter_dict(result):
-#     for b in a:
-#         print(b, "->", a[b])
+    total_time = end_time - start_time
+    print("Time taken:", total_time, "seconds")
 
 
-# result = ""
-# for chapter in all_chapters:
-#     result += extract_chapter(
-#         "/home/david/Coding/BibleTools3/Hebrew Scriptures/02-Exodus/" + chapter
-#     )
-
-# with open("/home/david/Coding/BibleTools3/exodus.txt", "w", encoding="utf8") as file:
-#     file.write(result)
-
-# for a in get_chapter_dict(result):
-#     for b in a:
-#         print(b, "->", a[b])
+doit()
 
 
-# with open("C:/Coding/BibleTools3/matches.txt", "w", encoding="utf8") as file:
-#     file.write(formatted_text)
+# pprint.pprint(result)
+
