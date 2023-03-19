@@ -1,11 +1,14 @@
 import json
+import itertools
+from collections import Counter
 from constants import BIBLE_BOOKS
+import pprint
 
 
 def read_json_bible(file_path: str) -> dict:
     with open(file_path, "r", encoding="utf8") as f:
-        data = json.load(f)
-    return data    
+        list_of_verse_dicts = json.load(f)
+    return list_of_verse_dicts
 
 
 def add_total_verse_words(verses: dict, book_name: str) -> int: 
@@ -18,22 +21,25 @@ def add_total_verse_words(verses: dict, book_name: str) -> int:
     return total_words
 
 
-verses = read_json_bible("/home/david/Coding/BibleTools3/result.txt")
-books_to_get = list(BIBLE_BOOKS.keys())  
-total_words ={}
+verses_list_of_dicts = read_json_bible("/home/david/Coding/BibleTools3/result.txt")
 
-for book in books_to_get:
-    print (f'Total words in {book}: {add_total_verse_words(verses, book)}')
+books_to_get = list(BIBLE_BOOKS.keys())  # Not needed but will get the book names and put in list
 
 
-# total_words=0
-# for book in bible:
-#     total_words += book['num_words_in_verse']
-        
-person = {'first_name': 'Jane', 'last_name': 'Doe'}
-new_dictionary = {}
-for k, v in person.items():
-    print (k)
-    print (v)
+# group the dictionaries by their book_name using itertools.groupby()
+verses_grouped_by_book_name = itertools.groupby(verses_list_of_dicts, lambda dict: dict["book_name"])
 
-# print (new_dictionary)
+
+for book_name, group in verses_grouped_by_book_name:
+    print (f'Book: {book_name}, has total of verses:  {len(list(group))}')
+    # for verse in group:
+    #     print (verse)
+
+
+verses_grouped_by_book_name = itertools.groupby(verses_list_of_dicts, lambda dict: dict["book_name"])
+# for each group, count the words in the "verse_text" field and print the total
+for book_name, group in verses_grouped_by_book_name:
+    words_iterable = itertools.chain.from_iterable(dict["verse_text"].split() for dict in group)
+    word_count = Counter(words_iterable)
+    total_words = sum(word_count.values())
+
