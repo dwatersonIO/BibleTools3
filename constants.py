@@ -1,4 +1,6 @@
-BASE_PATH='/home/david/Coding/BibleTools3/Hebrew Scriptures'
+BASE_PATH_LINUX = '/home/david/Coding/BibleTools3/Hebrew Scriptures'
+BASE_PATH_WINDOWS = '.\Hebrew Scriptures'
+
 
 BIBLE_BOOKS = {
     "Genesis": {"book_num": 1, "num_of_chaps": 50 },

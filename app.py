@@ -6,13 +6,12 @@ import re
 import docx
 import time
 import pprint 
-from constants import BIBLE_BOOKS, BASE_PATH
+from constants import BIBLE_BOOKS, BASE_PATH_WINDOWS
 
 
 def get_list_of_chapters(book_to_process: str) -> list:
     """
-    accapts Bible book name
-    returns a list of paths to chapter files in that book
+    accepts a list of paths to chapter files in that book
     
     """
     
@@ -28,7 +27,7 @@ def get_list_of_chapters(book_to_process: str) -> list:
 
         book_dir_name = f"{book_num_str}-{book_to_process}"
 
-        chapter_path = f"{BASE_PATH}/{book_dir_name}/{book_to_process} {chap_num_str}.docx"
+        chapter_path = f"{BASE_PATH_WINDOWS}\{book_dir_name}\{book_to_process} {chap_num_str}.docx"
         chaps_to_process.append(chapter_path) 
     
     return chaps_to_process    
@@ -100,14 +99,14 @@ def make_bible_list_of_dicts(list_of_books: list) -> list:
 
 
 def save_bible_as_json(result):
-    with open("/home/david/Coding/BibleTools3/result.txt", "w", encoding="utf8") as f:
+    with open("result.txt", "w", encoding="utf8") as f:
         json.dump(result, f, ensure_ascii=False)
 
 def doit():
     start_time = time.time()
     books_to_get = list(BIBLE_BOOKS.keys())  
     
-    result=make_bible_list_of_dicts(books_to_get)
+    result=make_bible_list_of_dicts(books_to_get[:4])
 
     # pprint.pprint(result[:5])  # Get an idea of what it looks like
 
@@ -117,6 +116,8 @@ def doit():
 
     total_time = end_time - start_time
     print("Time taken:", total_time, "seconds")
+    print (result[0:3])
+    
 
 
 doit()
