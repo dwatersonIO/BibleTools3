@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-<<<<<<< HEAD
 
 
 root = tk.Tk()
@@ -46,21 +45,3 @@ proc_btn.configure(command = save)
 
 # run
 root.mainloop()
-=======
-# window
-window = tk.Tk()
-window.title('Demo')
-window.geometry('300x150')
-
-# title
-title_label = ttk.Label(master = window, text = 'Miles to kilometers', font='Ubuntu 14 bold')
-title_label.pack()
-
-# input field
-input_frame = ttk.Frame(master = window)
-entry = ttk.Entry(master = input_frame)
-button = ttk.Button()
-
-#run 
-window.mainloop()
->>>>>>> 17e2c1cf769ec6583ada6eb63e80f6cb6831ec71

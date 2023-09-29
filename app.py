@@ -2,6 +2,7 @@
 
 """
 import json
+import pickle
 import re
 import docx
 import time
@@ -29,6 +30,7 @@ def get_list_of_chapters(book_to_process: str) -> list:
 
         chapter_path = f"{BASE_PATH_WINDOWS}\{book_dir_name}\{book_to_process} {chap_num_str}.docx"
         chaps_to_process.append(chapter_path) 
+    
     
     return chaps_to_process    
 
@@ -102,26 +104,41 @@ def save_bible_as_json(result):
     with open("result.txt", "w", encoding="utf8") as f:
         json.dump(result, f, ensure_ascii=False)
 
-def doit():
+
+def pickle_bible(result):
+    with open("result.pickle", "wb") as f:
+        pickle.dump(result, f)
+        
+
+
+def make_bible_object():
     start_time = time.time()
     books_to_get = list(BIBLE_BOOKS.keys())  
     
-    result=make_bible_list_of_dicts(books_to_get[:4])
+    result=make_bible_list_of_dicts(books_to_get[:5])  # change number to determine how many books are processed
 
-    # pprint.pprint(result[:5])  # Get an idea of what it looks like
-
-    save_bible_as_json(result)
+    # save_bible_as_json(result)
+    pickle_bible(result)
 
     end_time = time.time()
 
     total_time = end_time - start_time
     print("Time taken:", total_time, "seconds")
-    print (result[0:3])
     
 
+# doit()
 
-doit()
+def search_bible(search_text):
+    with open("result.pickle","rb") as f:
+        result = pickle.load(f)
+    
+    # print (result)
 
+    for chapter in result:
+           if search_text in chapter['verse_text']: 
+            print (f"{chapter['book_name']} {chapter['chapter_num']}:{chapter['verse_num']} {chapter['verse_text']}")
+            
+search_bible("Adam")
 
 # pprint.pprint(result)
 
